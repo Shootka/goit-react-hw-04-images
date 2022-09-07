@@ -1,69 +1,33 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Button from './Button/Button';
-import { search } from './utils/search';
-import { loadImages } from './query/query';
+import { search } from '../utils/search';
+import { loadImages } from '../query/query';
 
+const App = () => {
+    const [images, setImages] = useState([]);
+    const [keyword, setKeyword] = useState('');
+    const [page, setPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
 
-class App extends Component {
-  state = {
-    images: [],
-    isLoading: true,
-    page: 1,
-    keyword: '',
-  };
-
-  componentDidMount() {
-    setTimeout(() => {
-      loadImages(this.state.page).then(r  => {
-        this.setState(() => {
-          return {
-            images: [...r.data?.hits],
-            isLoading: false,
-          };
-        });
-      })
-    }, 400);
-  }
-
-  loadMoreHandler = (page) => {
-    this.setState({
-      isLoading: true,
-    });
-    setTimeout(() => {
+    useEffect(() => {
+      setIsLoading(true)
       loadImages(page)
         .then(r => {
-          this.setState(state => {
-            return {
-              keyword: '',
-              images: [...state.images, ...r.data?.hits],
-              isLoading: false,
-            };
-          });
+          setKeyword('');
+          setImages([...images,...r.data?.hits]);
+          setIsLoading(false);
         });
-    }, 400);
-  };
-
-  handleSubmit = (data) => {
-    this.setState(() => {
-      return {
-        keyword: data,
-        page: 1,
-      };
-    });
-  };
-
-
-  render() {
+    }, [page]);
     return (
       <div className={'App'}>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImageGallery images={search(this.state.images, this.state.keyword)} isLoading={this.state.isLoading} />
-        {this.state.images && <Button onLoadMore={this.loadMoreHandler} />}
+        <Searchbar setKeyword={setKeyword} />
+        <ImageGallery images={search(images, keyword)} isLoading={isLoading} />
+        {images && <Button page={page} setPage={setPage} />}
       </div>
     );
   }
-}
+;
 
 export default App;
